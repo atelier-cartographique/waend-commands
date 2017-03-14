@@ -8,81 +8,67 @@
  *
  */
 
-import _ from 'lodash';
-
-import ospath from 'path';
-import Promise from "bluebird";
-import {get as getBinder} from "../Bind";
+import * as ospath from 'path';
+import * as Promise from "bluebird";
+import { getenv, Context, ISys, ICommand } from "waend-shell";
 
 const dotdot = '..';
 const dot = '.';
 
-function cc (opt_path) {
-    if (!opt_path) {
-        const tmp = this.shell.env.DELIVERED;
-        if (_.isString(tmp)) {
-            opt_path = tmp;
-        }
-        else if (_.isObject(tmp) && ('id' in tmp)) {
-            const bcomps = getBinder().getComps(tmp.id);
-            opt_path = `/${bcomps.join('/')}`;
+const cc: (a: Context, b: ISys, c: string[]) => Promise<any> =
+    (ctx, _sys, argv) => {
+
+        let opt_path: string;
+
+        if (argv.length === 0) {
+            const tmp = getenv<string>('DELIVERED');
+            if (tmp) {
+                opt_path = tmp;
+            }
+            else {
+                return ctx.endWithError(new Error('NothingToChangeTo'));
+            }
         }
         else {
-            return this.endWithError('NothingToChangeTo');
+            opt_path = argv[0];
         }
-    }
 
-    const path = ospath.normalize(opt_path);
-    const isAbsolute = ospath.isAbsolute ? ospath.isAbsolute(path) : '/' === path[0];
-    const pathComps = path.split('/');
-    let ctxPath = [];
-    const shell = this.shell;
-    const terminal = this.shell.terminal;
-    const stdout = this.sys.stdout;
-    const stderr = this.sys.stderr;
+        const path = ospath.normalize(opt_path);
 
-    if(isAbsolute){
-        if(path.length > 1){
-            pathComps.shift();
-            ctxPath = pathComps;
+        if (path === dot) {
+            return ctx.end(0);
         }
-    }
-    else{
-        const pathCompsRef = path.split('/');
-        const current = this.current();
-        for (var i = 0; i < pathCompsRef.length; i++) {
-            const comp = pathCompsRef[i];
-            if(dotdot === comp){
-                current.pop();
+
+        const isAbsolute = '/' === path[0];
+        const pathComps = path.split('/');
+        let ctxPath: string[] = [];
+
+        if (isAbsolute) {
+            if (path.length > 1) {
                 pathComps.shift();
-            }
-            else{
-                break;
+                ctxPath = pathComps;
             }
         }
-        ctxPath = current.concat(pathComps);
+        else {
+            const pathCompsRef = path.split('/');
+            const current = ctx.current;
+            for (var i = 0; i < pathCompsRef.length; i++) {
+                const comp = pathCompsRef[i];
+                if (dotdot === comp) {
+                    current.pop();
+                    pathComps.shift();
+                }
+                else {
+                    break;
+                }
+            }
+            ctxPath = current.concat(pathComps);
+        }
+
+        return ctx.shell.switchContext(ctxPath);
     }
 
-    for (var i = ctxPath.length - 1; i >= 0; i--) {
-        const match = getBinder().matchKey(ctxPath[i]);
-        if(match.length === 1){
-            ctxPath[i] = match[0].id;
-        }
-        else{
-            // if('me' !== ctxPath[i]){
-            //     stderr.write('have '+ match.length +' match for '+ ctxPath[i]);
-            // }
-        }
-    }
-
-    const self = this;
-
-    return this.shell.historyPushContext(ctxPath)
-        .then(() => self.end(ctxPath))
-        .catch(err => Promise.reject(err));
-}
-
-export default {
+export const command: ICommand = {
     name: 'cc',
     command: cc
 };

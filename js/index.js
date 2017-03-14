@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var changeContext_1 = require("./changeContext");
+exports.changeContext = changeContext_1.command;
+var new_1 = require("./new");
+exports.create = new_1.command;
+var getAttribute_1 = require("./getAttribute");
+exports.getAttribute = getAttribute_1.command;
+var login_1 = require("./login");
+exports.login = login_1.command;
+var setAttribute_1 = require("./setAttribute");
+exports.setAttribute = setAttribute_1.command;

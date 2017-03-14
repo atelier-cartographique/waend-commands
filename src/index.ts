@@ -8,77 +8,35 @@
  *
  */
 
-import listCommands from './listCommands';
-import login from './login';
-import logout from './logout';
-import echo from './echo';
-import read from './read';
-import changeContext from './changeContext';
-import printCurrentContext from './printCurrentContext';
-import setAttribute from './setAttribute';
-import getAttribute from './getAttribute';
-import delAttribute from './delAttribute';
-import create from './create';
-import createGroup from './createGroup';
-import region from './region';
-import zoom from './zoom';
-import pan from './pan';
-import filter from './filter';
-import drawLine from './drawLine';
-import trace from './trace';
-import navigate from './navigate';
-import view from './view';
-import embed from './embed';
-import media from './media';
-import select from './select';
-import close from './close';
-import textEdit from './textEdit';
-import help from './help';
-import lookup from './lookup';
-import delFeature from './delFeature';
-import attach from './attach';
-import detach from './detach';
-import widget from './widget';
-import wSet from './wSet';
-import notify from './notify';
-import capture from './capture';
+/**
+ * Here we re-export everything
+ */
+
+// export attach from './attach';
+export { command as changeContext } from './changeContext';
+// export close from './close';
+export { command as create } from './new';
+// export delAttribute from './delAttribute';
+// export delFeature from './delFeature';
+// export detach from './detach';
+// export echo from './echo';
+// export filter from './filter';
+export { command as getAttribute } from './getAttribute';
+// export listCommands from './listCommands';
+export { command as login } from './login';
+// export logout from './logout';
+// export lookup from './lookup';
+// export media from './media';
+// export notify from './notify';
+// export pan from './pan';
+// export printCurrentContext from './printCurrentContext';
+// export read from './read';
+// export region from './region';
+// export select from './select';
+export { command as setAttribute } from './setAttribute';
+// export zoom from './zoom';
 
 
-export {
-    listCommands,
-    login,
-    logout,
-    echo,
-    read,
-    changeContext,
-    printCurrentContext,
-    setAttribute,
-    getAttribute,
-    delAttribute,
-    create,
-    createGroup,
-    region,
-    zoom,
-    pan,
-    filter,
-    drawLine,
-    trace,
-    navigate,
-    view,
-    embed,
-    media,
-    select,
-    close,
-    textEdit,
-    help,
-    lookup,
-    delFeature,
-    attach,
-    detach,
-    widget,
-    wSet,
-    notify,
-    capture
-};
+
 
 

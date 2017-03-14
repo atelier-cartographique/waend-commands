@@ -9,78 +9,95 @@
  */
 
 
-import querystring from 'querystring';
+import * as Promise from 'bluebird';
+import { stringify } from 'querystring';
+import { User } from "waend-lib";
+import {
+    ICommand, Context, Transport,
+    getenv, ISys, PostOptions
+} from 'waend-shell';
 
-import Transport from '../Transport';
-import config from '../../config';
-
-function login (username, password) {
-    const transport = new Transport();
-    const shell = this.shell;
-    const stdout = this.sys.stdout;
-    const stdin = this.sys.stdin;
-    const terminal = shell.terminal;
-    const binder = this.binder;
-
-
-    const remoteLogin = (username, password) => transport.post(config.public.loginUrl, {
-        'headers': {'Content-Type': 'application/x-www-form-urlencoded'},
-        'body': querystring.stringify({
-            'username': username,
-            'password': password
-        })
-    }).then(() => binder.getMe()
-        .then(user => {
-            // shell.user = user;
-            shell.loginUser(user);
-            const cmd1 = terminal.makeCommand({
-                'args': [
-                    `cc /${user.id}`,
-                    'get'],
-                'text': 'my public infos'
-            });
-            const cmd2 = terminal.makeCommand({
-                'args': [
-                    `cc /${user.id}`,
-                    'lg'],
-                'text': 'my maps'
-            });
-            stdout.write('Logged in - Go to ', cmd1, ' or ', cmd2);
-            return user;
-    }));
-
-    if (username && password) {
-        return remoteLogin(username, password);
-    }
-    else if (username) {
-        stdout.write('password:');
-        terminal.input(stdin);
-        return stdin.read().then(pwd => remoteLogin(username, pwd));
-    }
-    else {
-
-        const resolver = (resolve, reject) => {
-            stdout.write('e-mail:');
-            terminal.input(stdin);
-            stdin.read()
-                .then(username => {
-                    stdout.write('password:');
-                    terminal.input(stdin);
-                    document.getElementById("command-line").type="password";
-                    stdin.read()
-                        .then(pwd => {
-                        remoteLogin(username, pwd)
-                            .then(resolve)
-                            .catch(reject);
-                    });
-            });
-        };
-        return (new Promise(resolver));
-    }
+/*
+{
+    text: string;
+    fragment?: Element;
+    commands?: string[];
 }
+*/
+
+const login: (a: Context, b: ISys, c: string[]) => Promise<any> =
+    (ctx, sys, argv) => {
+        const transport = new Transport();
+        const shell = ctx.shell;
+        const stdout = sys.stdout;
+        const stdin = sys.stdin;
+        const binder = Context.binder;
+        const loginUrl = getenv<string>('LOGIN_URL');
+
+        if (!loginUrl) {
+            return Promise.reject(new Error('NoLoginUrlOnEnv'));
+        }
+
+        const remoteLogin: (a: string, b: string) => Promise<User> =
+            (username, password) => {
+                const options: PostOptions<void> = {
+                    url: loginUrl,
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: stringify({ username, password }),
+                    parse: () => { },
+                };
+
+                return transport.post(options)
+                    .then(() => (
+                        binder.getMe()
+                            .then(user => {
+                                shell.loginUser(user);
+                                const cmd1 = {
+                                    commands: [`cc /${user.id}`, 'get'],
+                                    text: 'my public infos'
+                                };
+                                const cmd2 = {
+                                    commands: [`cc /${user.id}`, 'lg'],
+                                    text: 'my maps'
+                                };
+                                stdout.write([cmd1, cmd2]);
+                                return user;
+                            })
+                    ));
+            };
+
+        if (argv.length >= 2) {
+            return remoteLogin(argv[0], argv[1]);
+        }
+        else if (argv.length === 1) {
+            stdout.write([{ text: 'password:' }]);
+            return (
+                stdin.read()
+                    .then((span) => remoteLogin(argv[0], span[0].text))
+            );
+        }
 
 
-export default {
+        stdout.write([{ text: 'e-mail:' }]);
+        return (
+            stdin.read()
+                .then((spanUsername) => {
+                    const username = spanUsername[0].text;
+                    stdout.write([{ text: 'password:' }]);
+                    stdin.read()
+                        .then(spanPassword => {
+                            const password = spanPassword[0].text;
+                            return remoteLogin(username, password);
+                        });
+                })
+        );
+
+    }
+
+export const command: ICommand = {
     name: 'login',
     command: login
 };
+

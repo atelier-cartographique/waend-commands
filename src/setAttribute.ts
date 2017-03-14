@@ -8,67 +8,134 @@
  *
  */
 
-import _ from 'lodash';
+import * as Promise from 'bluebird';
+import { ICommand, ISys, Context, getenv } from "waend-shell";
+import { Model, BaseModelData } from "waend-lib";
 
-function setAttr() {
-    if (0 === arguments.length) {
-        return this.end();
-    }
-    const args = _.toArray(arguments);
-    const key = args.shift();
-    const env = this.shell.env;
-    let data;
 
-    if (!key) {
-        throw (new Error('No Key'));
-    }
-
-    if (0 === args.length && env.DELIVERED) {
-        if (_.isArray(env.DELIVERED)) { // toString on this does not mork
-            return this.data.set(key, env.DELIVERED);
-        }
-        try {
-            const delivered = env.DELIVERED.toJSON();
-            return this.data.set(key, delivered);
-        }
-        catch (err) {
-            //            return this.data.set(key, env.DELIVERED);
-            try {
-                data = JSON.parse(env.DELIVERED.toString());
-                return this.data.set(key, data);
-            }
-            catch (err) {
-                // ok, didn't work either, make it a String.
-                return this.data.set(key, env.DELIVERED.toString());
-            }
-        }
-    }
-    else if (1 === args.length) {
-        // we first try to parse it, who knows?
-        try {
-            data = JSON.parse(args[0].toString());
-            return this.data.set(key, data);
-        }
-        catch (err) {
-            // ok, didn't work either, make it a String.
-            return this.data.set(key, args[0].toString());
-        }
-    }
-    // finally we consider each argument to be an array item
-    data = _.map(args, v => {
-        try {
-            const ldata = JSON.parse(v.toString());
-            return ldata;
-        }
-        catch (err) {
-            return v.toString();
-        }
-    });
-    return this.data.set(key, data);
+interface Components {
+    user: string;
+    group?: string;
+    layer?: string;
+    feature?: string;
 }
 
 
-export default {
+const getPathComponents: (a: string) => (Components | null) =
+    (path) => {
+        const comps = path.split('/');
+        if (comps.length < 1) {
+            return null;
+        }
+
+        return {
+            user: comps[0],
+            group: comps[1],
+            layer: comps[2],
+            feature: comps[3],
+        }
+    }
+
+
+const setUser: (b: Components, c: string, d: any) => Promise<Model> =
+    (components, key, value) => {
+        const uid = components.user;
+
+        return (
+            Context.binder
+                .getUser(uid)
+                .then((model) => Context.binder.update(model, key, value))
+        );
+    }
+
+
+const setGroup: (b: Components, c: string, d: any) => Promise<Model> =
+    (components, key, value) => {
+        const uid = components.user;
+        const gid = <string>components.group;
+
+        return (
+            Context.binder
+                .getGroup(uid, gid)
+                .then((model) => Context.binder.update(model, key, value))
+        );
+    }
+
+
+const setLayer: (b: Components, c: string, d: any) => Promise<Model> =
+    (components, key, value) => {
+        const uid = components.user;
+        const gid = <string>components.group;
+        const lid = <string>components.layer;
+
+        return (
+            Context.binder
+                .getLayer(uid, gid, lid)
+                .then((model) => Context.binder.update(model, key, value))
+        );
+    }
+
+
+const setFeature: (b: Components, c: string, d: any) => Promise<Model> =
+    (components, key, value) => {
+        const uid = components.user;
+        const gid = <string>components.group;
+        const lid = <string>components.layer;
+        const fid = <string>components.feature;
+
+        return (
+            Context.binder
+                .getFeature(uid, gid, lid, fid)
+                .then((model) => Context.binder.update(model, key, value))
+        );
+    }
+
+
+
+const setAttr: (a: Context, b: ISys, c: string[]) => Promise<any> =
+    (ctx, _sys, argv) => {
+        if (argv.length < 2) {
+            return Promise.reject(new Error('TooFewArguments'));
+        }
+
+
+        const components = getPathComponents(ctx.resolve(argv[0]));
+
+        if (!components) {
+            return Promise.reject(new Error('InvalidPath'));
+        }
+
+        const fromDelivered = getenv<BaseModelData>('DELIVERED');
+        const key: string = argv[1];
+        let value: any;
+
+        if (argv.length > 2) {
+            value = JSON.parse(argv[2]);
+        }
+        else if (fromDelivered) {
+            value = fromDelivered;
+        }
+
+        if (!value) {
+            return Promise.reject(new Error('NoValue'));
+        }
+
+        if (components.feature) {
+            return setFeature(components, key, value);
+        }
+        else if (components.layer) {
+            return setLayer(components, key, value);
+        }
+        else if (components.group) {
+            return setGroup(components, key, value);
+        }
+        else {
+            return setUser(components, key, value);
+        }
+    }
+
+
+export const command: ICommand = {
     name: 'set',
     command: setAttr
 };

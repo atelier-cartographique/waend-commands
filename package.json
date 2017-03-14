@@ -7,5 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Pierre Marchand",
-  "license": "AGPL-3.0"
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "querystring": "^0.2.0",
+    "waend-lib": "github:atelier-cartographique/waend-lib",
+    "waend-shell": "github:atelier-cartographique/waend-shell",
+    "waend-util": "github:atelier-cartographique/waend-util"
+  }
 }
