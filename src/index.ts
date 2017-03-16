@@ -29,7 +29,7 @@ export { command as login } from './login';
 // export media from './media';
 // export notify from './notify';
 // export pan from './pan';
-// export printCurrentContext from './printCurrentContext';
+export { command as printCurrentContext } from './printCurrentContext';
 // export read from './read';
 // export region from './region';
 // export select from './select';

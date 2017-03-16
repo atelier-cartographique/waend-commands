@@ -8,35 +8,17 @@
  *
  */
 
-const db = require('../Bind').get().db;
+import * as Promise from 'bluebird';
+import { Context, ISys, ICommand } from "waend-shell";
 
-function pcc () {
-    const shell = this.shell;
-    const terminal = shell.terminal;
-    const current = this.current();
-    const stdout = this.sys.stdout;
-    const crt = [];
+const pcc: (a: Context, b: ISys, c: string[]) => Promise<any> =
+    (ctx, sys) => {
+        const currentContext = ctx.resolve('');
+        sys.stdout.write([{ text: currentContext }]);
+        return ctx.end(currentContext);
+    }
 
-    for(let i=0; i < current.length; i++){
-        const m = db.get(current[i]);
-        const s = current.slice(0, i+1);
-        const cmd = terminal.makeCommand({
-            args:[`cc /${s.join('/')}`],
-            text: (m.get('name') || current[i])
-        });
-        crt.push('/');
-        crt.push(cmd);
-    }
-    if(crt.length > 0){
-        stdout.write.apply(shell.stdout, crt);
-    }
-    else{
-        stdout.write('/');
-    }
-    return this.end();
-}
-
-export default {
+export const command: ICommand = {
     name: 'pcc',
     command: pcc
 };

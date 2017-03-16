@@ -10,5 +10,7 @@ var getAttribute_1 = require("./getAttribute");
 exports.getAttribute = getAttribute_1.command;
 var login_1 = require("./login");
 exports.login = login_1.command;
+var printCurrentContext_1 = require("./printCurrentContext");
+exports.printCurrentContext = printCurrentContext_1.command;
 var setAttribute_1 = require("./setAttribute");
 exports.setAttribute = setAttribute_1.command;
