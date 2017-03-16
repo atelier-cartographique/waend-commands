@@ -25,10 +25,10 @@ interface CreateOption {
 
 
 const createGroup: (a: Context, b: ISys, c: CreateOption) => Promise<Group> =
-    (_ctx, sys, options) => {
+    (ctx, sys, options) => {
         const uid = options.parent.user;
         return (
-            Context.binder
+            ctx.binder
                 .setGroup(uid, options.data)
                 .then((model) => {
                     const cmd: Span = {
@@ -43,13 +43,13 @@ const createGroup: (a: Context, b: ISys, c: CreateOption) => Promise<Group> =
 
 
 const createLayer: (a: Context, b: ISys, c: CreateOption) => Promise<Layer> =
-    (_ctx, sys, options) => {
+    (ctx, sys, options) => {
         const parent = options.parent;
         if (parent.pathType === 'group') {
             const uid = parent.user;
             const gid = parent.group;
             return (
-                Context.binder
+                ctx.binder
                     .setLayer(uid, gid, options.data)
                     .then((model) => {
                         const cmd: Span = {
@@ -67,14 +67,14 @@ const createLayer: (a: Context, b: ISys, c: CreateOption) => Promise<Layer> =
 
 
 const createFeature: (a: Context, b: ISys, c: CreateOption) => Promise<Feature> =
-    (_ctx, sys, options) => {
+    (ctx, sys, options) => {
         const parent = options.parent;
         if (parent.pathType === 'layer') {
             const uid = parent.user;
             const gid = parent.group;
             const lid = parent.layer;
             return (
-                Context.binder
+                ctx.binder
                     .setFeature(uid, gid, lid, options.data, false)
                     .then((model) => {
                         const cmd: Span = {

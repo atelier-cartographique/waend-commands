@@ -8,7 +8,7 @@ const login = (ctx, sys, argv) => {
     const shell = ctx.shell;
     const stdout = sys.stdout;
     const stdin = sys.stdin;
-    const binder = waend_shell_1.Context.binder;
+    const binder = ctx.binder;
     const loginUrl = waend_shell_1.getenv('LOGIN_URL');
     if (!loginUrl) {
         return Promise.reject(new Error('NoLoginUrlOnEnv'));

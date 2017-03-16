@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Promise = require("bluebird");
 const waend_shell_1 = require("waend-shell");
 const waend_util_1 = require("waend-util");
-const createGroup = (_ctx, sys, options) => {
+const createGroup = (ctx, sys, options) => {
     const uid = options.parent.user;
-    return (waend_shell_1.Context.binder
+    return (ctx.binder
         .setGroup(uid, options.data)
         .then((model) => {
         const cmd = {
@@ -16,12 +16,12 @@ const createGroup = (_ctx, sys, options) => {
         return model;
     }));
 };
-const createLayer = (_ctx, sys, options) => {
+const createLayer = (ctx, sys, options) => {
     const parent = options.parent;
     if (parent.pathType === 'group') {
         const uid = parent.user;
         const gid = parent.group;
-        return (waend_shell_1.Context.binder
+        return (ctx.binder
             .setLayer(uid, gid, options.data)
             .then((model) => {
             const cmd = {
@@ -35,13 +35,13 @@ const createLayer = (_ctx, sys, options) => {
     }
     return Promise.reject('WrongParentType');
 };
-const createFeature = (_ctx, sys, options) => {
+const createFeature = (ctx, sys, options) => {
     const parent = options.parent;
     if (parent.pathType === 'layer') {
         const uid = parent.user;
         const gid = parent.group;
         const lid = parent.layer;
-        return (waend_shell_1.Context.binder
+        return (ctx.binder
             .setFeature(uid, gid, lid, options.data, false)
             .then((model) => {
             const cmd = {

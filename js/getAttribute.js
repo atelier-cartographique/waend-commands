@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Promise = require("bluebird");
 const waend_util_1 = require("waend-util");
-const waend_shell_1 = require("waend-shell");
 const { getDomForModel, appendText, DIV } = waend_util_1.dom;
 const makeOutput = (sys, model) => (k) => {
     const wrapper = DIV();
@@ -22,33 +21,33 @@ const xxx = (sys, key) => (model) => {
     keys.forEach(makeOutput(sys, model));
     return model;
 };
-const getUser = (sys, key, components) => {
+const getUser = (ctx, sys, key, components) => {
     const uid = components.user;
-    return (waend_shell_1.Context.binder
+    return (ctx.binder
         .getUser(uid)
         .then(xxx(sys, key)));
 };
-const getGroup = (sys, key, components) => {
+const getGroup = (ctx, sys, key, components) => {
     const uid = components.user;
     const gid = components.group;
-    return (waend_shell_1.Context.binder
+    return (ctx.binder
         .getGroup(uid, gid)
         .then(xxx(sys, key)));
 };
-const getLayer = (sys, key, components) => {
+const getLayer = (ctx, sys, key, components) => {
     const uid = components.user;
     const gid = components.group;
     const lid = components.layer;
-    return (waend_shell_1.Context.binder
+    return (ctx.binder
         .getLayer(uid, gid, lid)
         .then(xxx(sys, key)));
 };
-const getFeature = (sys, key, components) => {
+const getFeature = (ctx, sys, key, components) => {
     const uid = components.user;
     const gid = components.group;
     const lid = components.layer;
     const fid = components.feature;
-    return (waend_shell_1.Context.binder
+    return (ctx.binder
         .getFeature(uid, gid, lid, fid)
         .then(xxx(sys, key)));
 };
@@ -62,16 +61,16 @@ const getAttr = (ctx, sys, argv) => {
     }
     const key = argv[1];
     if (components.pathType === 'feature') {
-        return getFeature(sys, key, components);
+        return getFeature(ctx, sys, key, components);
     }
     else if (components.pathType === 'layer') {
-        return getLayer(sys, key, components);
+        return getLayer(ctx, sys, key, components);
     }
     else if (components.pathType === 'group') {
-        return getGroup(sys, key, components);
+        return getGroup(ctx, sys, key, components);
     }
     else {
-        return getUser(sys, key, components);
+        return getUser(ctx, sys, key, components);
     }
 };
 exports.command = {

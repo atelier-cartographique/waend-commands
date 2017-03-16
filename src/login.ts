@@ -31,7 +31,7 @@ const login: (a: Context, b: ISys, c: string[]) => Promise<any> =
         const shell = ctx.shell;
         const stdout = sys.stdout;
         const stdin = sys.stdin;
-        const binder = Context.binder;
+        const binder = ctx.binder;
         const loginUrl = getenv<string>('LOGIN_URL');
 
         if (!loginUrl) {

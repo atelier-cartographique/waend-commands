@@ -16,7 +16,7 @@ const attach: (a: Context, b: ISys, c: string[]) => Promise<any> =
         if (groupComps && layerComps
             && groupComps.pathType === 'group'
             && layerComps.pathType === 'layer') {
-            return Context.binder.attachLayerToGroup(
+            return ctx.binder.attachLayerToGroup(
                 groupComps.user,
                 groupComps.group,
                 layerComps.layer
