@@ -17,46 +17,43 @@ const createGroup = (_ctx, sys, options) => {
     }));
 };
 const createLayer = (_ctx, sys, options) => {
-    const uid = options.parent.user;
-    const gid = options.parent.group;
-    return (waend_shell_1.Context.binder
-        .setLayer(uid, gid, options.data)
-        .then((model) => {
-        const cmd = {
-            commands: [`cc /${uid}/${gid}/${model.id}`, 'get'],
-            text: waend_util_1.getModelName(model)
-        };
-        sys.stdout.write([{ text: 'created layer : ' }, cmd]);
-        waend_shell_1.semaphore.signal('create:layer', model);
-        return model;
-    }));
+    const parent = options.parent;
+    if (parent.pathType === 'group') {
+        const uid = parent.user;
+        const gid = parent.group;
+        return (waend_shell_1.Context.binder
+            .setLayer(uid, gid, options.data)
+            .then((model) => {
+            const cmd = {
+                commands: [`cc /${uid}/${gid}/${model.id}`, 'get'],
+                text: waend_util_1.getModelName(model)
+            };
+            sys.stdout.write([{ text: 'created layer : ' }, cmd]);
+            waend_shell_1.semaphore.signal('create:layer', model);
+            return model;
+        }));
+    }
+    return Promise.reject('WrongParentType');
 };
 const createFeature = (_ctx, sys, options) => {
-    const uid = options.parent.user;
-    const gid = options.parent.group;
-    const lid = options.parent.layer;
-    return (waend_shell_1.Context.binder
-        .setFeature(uid, gid, lid, options.data, false)
-        .then((model) => {
-        const cmd = {
-            commands: [`cc /${uid}/${gid}/${lid}/${model.id}`, 'get'],
-            text: waend_util_1.getModelName(model)
-        };
-        sys.stdout.write([{ text: 'created feature : ' }, cmd]);
-        waend_shell_1.semaphore.signal('create:feature', model);
-        return model;
-    }));
-};
-const getPathComponents = (path) => {
-    const comps = path.split('/');
-    if (comps.length < 1) {
-        return null;
+    const parent = options.parent;
+    if (parent.pathType === 'layer') {
+        const uid = parent.user;
+        const gid = parent.group;
+        const lid = parent.layer;
+        return (waend_shell_1.Context.binder
+            .setFeature(uid, gid, lid, options.data, false)
+            .then((model) => {
+            const cmd = {
+                commands: [`cc /${uid}/${gid}/${lid}/${model.id}`, 'get'],
+                text: waend_util_1.getModelName(model)
+            };
+            sys.stdout.write([{ text: 'created feature : ' }, cmd]);
+            waend_shell_1.semaphore.signal('create:feature', model);
+            return model;
+        }));
     }
-    return {
-        user: comps[0],
-        group: comps[1],
-        layer: comps[2],
-    };
+    return Promise.reject('WrongParentType');
 };
 const parseArgv = (ctx, argv) => {
     const fromDelivered = waend_shell_1.getenv('DELIVERED');
@@ -64,7 +61,7 @@ const parseArgv = (ctx, argv) => {
         return null;
     }
     const what = argv[0];
-    const parent = getPathComponents(ctx.resolve(argv[1]));
+    const parent = waend_util_1.getPathComponents(ctx.resolve(argv[1]));
     let data;
     if ((what !== 'group') && (what !== 'layer') && (what !== 'feature')) {
         return null;

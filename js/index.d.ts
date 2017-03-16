@@ -1,3 +1,4 @@
+export { command as attach } from './attach';
 export { command as changeContext } from './changeContext';
 export { command as create } from './new';
 export { command as getAttribute } from './getAttribute';

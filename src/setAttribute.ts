@@ -11,30 +11,8 @@
 import * as Promise from 'bluebird';
 import { ICommand, ISys, Context, getenv } from "waend-shell";
 import { Model, BaseModelData } from "waend-lib";
+import { Components, GroupComponents, LayerComponents, FeatureComponents, getPathComponents } from "waend-util";
 
-
-interface Components {
-    user: string;
-    group?: string;
-    layer?: string;
-    feature?: string;
-}
-
-
-const getPathComponents: (a: string) => (Components | null) =
-    (path) => {
-        const comps = path.split('/');
-        if (comps.length < 1) {
-            return null;
-        }
-
-        return {
-            user: comps[0],
-            group: comps[1],
-            layer: comps[2],
-            feature: comps[3],
-        }
-    }
 
 
 const setUser: (b: Components, c: string, d: any) => Promise<Model> =
@@ -49,10 +27,10 @@ const setUser: (b: Components, c: string, d: any) => Promise<Model> =
     }
 
 
-const setGroup: (b: Components, c: string, d: any) => Promise<Model> =
+const setGroup: (b: GroupComponents, c: string, d: any) => Promise<Model> =
     (components, key, value) => {
         const uid = components.user;
-        const gid = <string>components.group;
+        const gid = components.group;
 
         return (
             Context.binder
@@ -62,11 +40,11 @@ const setGroup: (b: Components, c: string, d: any) => Promise<Model> =
     }
 
 
-const setLayer: (b: Components, c: string, d: any) => Promise<Model> =
+const setLayer: (b: LayerComponents, c: string, d: any) => Promise<Model> =
     (components, key, value) => {
         const uid = components.user;
-        const gid = <string>components.group;
-        const lid = <string>components.layer;
+        const gid = components.group;
+        const lid = components.layer;
 
         return (
             Context.binder
@@ -76,12 +54,12 @@ const setLayer: (b: Components, c: string, d: any) => Promise<Model> =
     }
 
 
-const setFeature: (b: Components, c: string, d: any) => Promise<Model> =
+const setFeature: (b: FeatureComponents, c: string, d: any) => Promise<Model> =
     (components, key, value) => {
         const uid = components.user;
-        const gid = <string>components.group;
-        const lid = <string>components.layer;
-        const fid = <string>components.feature;
+        const gid = components.group;
+        const lid = components.layer;
+        const fid = components.feature;
 
         return (
             Context.binder
@@ -120,13 +98,13 @@ const setAttr: (a: Context, b: ISys, c: string[]) => Promise<any> =
             return Promise.reject(new Error('NoValue'));
         }
 
-        if (components.feature) {
+        if (components.pathType === 'feature') {
             return setFeature(components, key, value);
         }
-        else if (components.layer) {
+        else if (components.pathType === 'layer') {
             return setLayer(components, key, value);
         }
-        else if (components.group) {
+        else if (components.pathType === 'group') {
             return setGroup(components, key, value);
         }
         else {

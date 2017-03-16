@@ -12,15 +12,10 @@
 import * as Promise from 'bluebird';
 import { semaphore, Context, ISys, getenv, ICommand } from 'waend-shell';
 import { BaseModelData, Group, Span, Layer, Feature } from 'waend-lib';
-import { getModelName } from 'waend-util';
+import { getModelName, getPathComponents, Components } from 'waend-util';
 
 type What = 'group' | 'layer' | 'feature';
 
-interface Components {
-    user: string;
-    group?: string;
-    layer?: string;
-}
 
 interface CreateOption {
     what: What;
@@ -49,62 +44,51 @@ const createGroup: (a: Context, b: ISys, c: CreateOption) => Promise<Group> =
 
 const createLayer: (a: Context, b: ISys, c: CreateOption) => Promise<Layer> =
     (_ctx, sys, options) => {
-        const uid = options.parent.user;
-        const gid = <string>options.parent.group;
-        return (
-            Context.binder
-                .setLayer(uid, gid, options.data)
-                .then((model) => {
-                    const cmd: Span = {
-                        commands: [`cc /${uid}/${gid}/${model.id}`, 'get'],
-                        text: getModelName(model)
-                    };
-                    sys.stdout.write([{ text: 'created layer : ' }, cmd]);
-                    semaphore.signal('create:layer', model);
-                    return model;
-                })
-        );
+        const parent = options.parent;
+        if (parent.pathType === 'group') {
+            const uid = parent.user;
+            const gid = parent.group;
+            return (
+                Context.binder
+                    .setLayer(uid, gid, options.data)
+                    .then((model) => {
+                        const cmd: Span = {
+                            commands: [`cc /${uid}/${gid}/${model.id}`, 'get'],
+                            text: getModelName(model)
+                        };
+                        sys.stdout.write([{ text: 'created layer : ' }, cmd]);
+                        semaphore.signal('create:layer', model);
+                        return model;
+                    })
+            );
+        }
+        return Promise.reject('WrongParentType');
     }
 
 
 const createFeature: (a: Context, b: ISys, c: CreateOption) => Promise<Feature> =
     (_ctx, sys, options) => {
-        const uid = options.parent.user;
-        const gid = <string>options.parent.group;
-        const lid = <string>options.parent.layer;
-        return (
-            Context.binder
-                .setFeature(uid, gid, lid, options.data, false)
-                .then((model) => {
-                    const cmd: Span = {
-                        commands: [`cc /${uid}/${gid}/${lid}/${model.id}`, 'get'],
-                        text: getModelName(model)
-                    };
-                    sys.stdout.write([{ text: 'created feature : ' }, cmd]);
-                    semaphore.signal('create:feature', model);
-                    return model;
-                })
-        );
-    }
-
-
-
-
-
-const getPathComponents: (a: string) => (Components | null) =
-    (path) => {
-        const comps = path.split('/');
-        if (comps.length < 1) {
-            return null;
+        const parent = options.parent;
+        if (parent.pathType === 'layer') {
+            const uid = parent.user;
+            const gid = parent.group;
+            const lid = parent.layer;
+            return (
+                Context.binder
+                    .setFeature(uid, gid, lid, options.data, false)
+                    .then((model) => {
+                        const cmd: Span = {
+                            commands: [`cc /${uid}/${gid}/${lid}/${model.id}`, 'get'],
+                            text: getModelName(model)
+                        };
+                        sys.stdout.write([{ text: 'created feature : ' }, cmd]);
+                        semaphore.signal('create:feature', model);
+                        return model;
+                    })
+            );
         }
-
-        return {
-            user: comps[0],
-            group: comps[1],
-            layer: comps[2],
-        }
+        return Promise.reject('WrongParentType');
     }
-
 
 
 const parseArgv: (a: Context, b: string[]) => (CreateOption | null) =

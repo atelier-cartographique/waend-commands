@@ -1,34 +1,12 @@
 
 import * as Promise from 'bluebird';
-import { dom } from 'waend-util';
+import { dom, getPathComponents, Components, FeatureComponents, LayerComponents, GroupComponents } from 'waend-util';
 import { ICommand, ISys, Context } from "waend-shell";
 import { Model } from "waend-lib";
-
-interface Components {
-    user: string;
-    group?: string;
-    layer?: string;
-    feature?: string;
-}
 
 
 const { getDomForModel, appendText, DIV } = dom;
 
-
-const getPathComponents: (a: string) => (Components | null) =
-    (path) => {
-        const comps = path.split('/');
-        if (comps.length < 1) {
-            return null;
-        }
-
-        return {
-            user: comps[0],
-            group: comps[1],
-            layer: comps[2],
-            feature: comps[3],
-        }
-    }
 
 const makeOutput: (a: ISys, c: Model) => (b: string) => void =
     (sys, model) => (k) => {
@@ -71,10 +49,10 @@ const getUser: (a: ISys, b: string, c: Components) => Promise<Model> =
     }
 
 
-const getGroup: (a: ISys, b: string, c: Components) => Promise<Model> =
+const getGroup: (a: ISys, b: string, c: GroupComponents) => Promise<Model> =
     (sys, key, components) => {
         const uid = components.user;
-        const gid = <string>components.group;
+        const gid = components.group;
 
         return (
             Context.binder
@@ -84,11 +62,11 @@ const getGroup: (a: ISys, b: string, c: Components) => Promise<Model> =
     }
 
 
-const getLayer: (a: ISys, b: string, c: Components) => Promise<Model> =
+const getLayer: (a: ISys, b: string, c: LayerComponents) => Promise<Model> =
     (sys, key, components) => {
         const uid = components.user;
-        const gid = <string>components.group;
-        const lid = <string>components.layer;
+        const gid = components.group;
+        const lid = components.layer;
 
         return (
             Context.binder
@@ -98,12 +76,12 @@ const getLayer: (a: ISys, b: string, c: Components) => Promise<Model> =
     }
 
 
-const getFeature: (a: ISys, b: string, c: Components) => Promise<Model> =
+const getFeature: (a: ISys, b: string, c: FeatureComponents) => Promise<Model> =
     (sys, key, components) => {
         const uid = components.user;
-        const gid = <string>components.group;
-        const lid = <string>components.layer;
-        const fid = <string>components.feature;
+        const gid = components.group;
+        const lid = components.layer;
+        const fid = components.feature;
 
         return (
             Context.binder
@@ -128,13 +106,13 @@ const getAttr: (a: Context, b: ISys, c: string[]) => Promise<any> =
 
         const key: (string | undefined) = argv[1];
 
-        if (components.feature) {
+        if (components.pathType === 'feature') {
             return getFeature(sys, key, components);
         }
-        else if (components.layer) {
+        else if (components.pathType === 'layer') {
             return getLayer(sys, key, components);
         }
-        else if (components.group) {
+        else if (components.pathType === 'group') {
             return getGroup(sys, key, components);
         }
         else {

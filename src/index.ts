@@ -12,7 +12,7 @@
  * Here we re-export everything
  */
 
-// export attach from './attach';
+export { command as attach } from './attach';
 export { command as changeContext } from './changeContext';
 // export close from './close';
 export { command as create } from './new';

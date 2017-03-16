@@ -4,18 +4,6 @@ const Promise = require("bluebird");
 const waend_util_1 = require("waend-util");
 const waend_shell_1 = require("waend-shell");
 const { getDomForModel, appendText, DIV } = waend_util_1.dom;
-const getPathComponents = (path) => {
-    const comps = path.split('/');
-    if (comps.length < 1) {
-        return null;
-    }
-    return {
-        user: comps[0],
-        group: comps[1],
-        layer: comps[2],
-        feature: comps[3],
-    };
-};
 const makeOutput = (sys, model) => (k) => {
     const wrapper = DIV();
     const key = DIV();
@@ -68,18 +56,18 @@ const getAttr = (ctx, sys, argv) => {
     if (argv.length === 0) {
         return Promise.reject(new Error('MissingArguments'));
     }
-    const components = getPathComponents(ctx.resolve(argv[0]));
+    const components = waend_util_1.getPathComponents(ctx.resolve(argv[0]));
     if (!components) {
         return Promise.reject(new Error('InvalidPath'));
     }
     const key = argv[1];
-    if (components.feature) {
+    if (components.pathType === 'feature') {
         return getFeature(sys, key, components);
     }
-    else if (components.layer) {
+    else if (components.pathType === 'layer') {
         return getLayer(sys, key, components);
     }
-    else if (components.group) {
+    else if (components.pathType === 'group') {
         return getGroup(sys, key, components);
     }
     else {

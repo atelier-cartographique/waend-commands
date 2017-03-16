@@ -1,5 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var attach_1 = require("./attach");
+exports.attach = attach_1.command;
 var changeContext_1 = require("./changeContext");
 exports.changeContext = changeContext_1.command;
 var new_1 = require("./new");

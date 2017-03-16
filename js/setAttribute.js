@@ -2,18 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Promise = require("bluebird");
 const waend_shell_1 = require("waend-shell");
-const getPathComponents = (path) => {
-    const comps = path.split('/');
-    if (comps.length < 1) {
-        return null;
-    }
-    return {
-        user: comps[0],
-        group: comps[1],
-        layer: comps[2],
-        feature: comps[3],
-    };
-};
+const waend_util_1 = require("waend-util");
 const setUser = (components, key, value) => {
     const uid = components.user;
     return (waend_shell_1.Context.binder
@@ -48,7 +37,7 @@ const setAttr = (ctx, _sys, argv) => {
     if (argv.length < 2) {
         return Promise.reject(new Error('TooFewArguments'));
     }
-    const components = getPathComponents(ctx.resolve(argv[0]));
+    const components = waend_util_1.getPathComponents(ctx.resolve(argv[0]));
     if (!components) {
         return Promise.reject(new Error('InvalidPath'));
     }
@@ -64,13 +53,13 @@ const setAttr = (ctx, _sys, argv) => {
     if (!value) {
         return Promise.reject(new Error('NoValue'));
     }
-    if (components.feature) {
+    if (components.pathType === 'feature') {
         return setFeature(components, key, value);
     }
-    else if (components.layer) {
+    else if (components.pathType === 'layer') {
         return setLayer(components, key, value);
     }
-    else if (components.group) {
+    else if (components.pathType === 'group') {
         return setGroup(components, key, value);
     }
     else {
