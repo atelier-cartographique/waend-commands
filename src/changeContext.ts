@@ -20,7 +20,11 @@ const cc: (a: Context, b: ISys, c: string[]) => Promise<any> =
         }
 
         const opt_path = argv[0];
-        const comps = ctx.resolve(opt_path).split('/');
+        // slice(1) here because Context.resolve will 
+        // always returns a leading '/' and then 
+        // split('/') will always start 
+        // with a leading empty string
+        const comps = ctx.resolve(opt_path).split('/').slice(1);
         return ctx.shell.switchContext(comps);
     }
 
