@@ -25,7 +25,7 @@ export { command as getAttribute } from './getAttribute';
 // export listCommands from './listCommands';
 export { command as login } from './login';
 // export logout from './logout';
-// export lookup from './lookup';
+export { command as lookup } from './lookup';
 // export media from './media';
 // export notify from './notify';
 // export pan from './pan';

@@ -8,79 +8,109 @@
  *
  */
 
-import _ from 'lodash';
+import * as Promise from 'bluebird';
+import { getconfig, SpanPack } from 'waend-lib';
+import { Transport, Context, ISys, ICommand } from 'waend-shell';
 
-import Promise from 'bluebird';
-import config from '../../config';
-import Transport from '../Transport';
+// const API_URL = config.public.apiUrl;
 
-const API_URL = config.public.apiUrl;
+interface Properties {
+    [key: string]: any;
+}
 
+interface Result {
+    id: string;
+    user_id: string;
+    properties: Properties;
+}
 
-function lookup (term) {
-    if (!term) {
-        return this.endWithError('this command expect a term to lookup argument');
-    }
-    const self = this;
-    const stdout = self.sys.stdout;
-    const shell = self.shell;
-    const terminal = shell.terminal;
+interface ScoredResult extends Result {
+    score: number;
+}
 
-    const resolver = (resolve, reject) => {
-        const transport = new Transport();
-        const success = data => {
-            if('results' in data) {
-                const groups = {};
-                for (var i = 0; i < data.results.length; i++) {
-                    var result = data.results[i];
-                    if (!(result.id in groups)) {
-                        groups[result.id] = {
-                            model: result,
-                            score: 1
-                        };
-                    }
-                    else {
-                        groups[result.id].score += 1;
-                    }
-                }
-                const og = _.values(groups);
-                og.sort((a, b) => b.score - a.score);
-                for (var i = 0; i < og.length; i++) {
-                    const result = og[i].model;
-                    const score = og[i].score;
-                    const props = result.properties;
-                    const name = props.name || result.id;
-                    const ctxPath = `/${result.user_id}/${result.id}`;
+interface ResultMatrix {
+    [id: string]: ScoredResult;
+}
 
-                    const cmd0 = terminal.makeCommand({
-                        'args' : [
-                            `cc ${ctxPath}`,
-                            'get'
-                        ],
-                        'text' : `${name} (${score})`
-                    });
-                    stdout.write(cmd0);
-                }
-                resolve(data.medias);
-            }
-            else {
-                reject(new Error('NothingFound'));
-            }
-        };
-        const error = err => {
-            reject(err);
-        };
-        transport
-            .get(`${API_URL}/group/${term}`)
-            .then(success)
-            .catch(error);
-    };
-
-    return (new Promise(resolver));
+interface LookupResult {
+    page: number;
+    totalCount: number;
+    pageSize: number;
+    pageCount: number;
+    results?: Result[];
 }
 
 
-export default {
+const makeSpan: (a: ScoredResult) => SpanPack =
+    (data) => {
+        return [
+            {
+                text: `${data.properties.name} (${data.score})`,
+                commands: [`cc /${data.user_id}/${data.id}`]
+            }
+        ];
+    };
+
+const printResult: (a: Context, b: ISys) => (c: LookupResult) => ScoredResult[] =
+    (_ctx, sys) => (data) => {
+        if (data.results) {
+
+            const results = data.results.reduce((acc, result) => {
+                if (!(result.id in acc)) {
+                    acc[result.id] = {
+                        score: 0,
+                        ...result
+                    };
+                }
+                acc[result.id].score += 1;
+                return acc;
+            }, <ResultMatrix>{});
+
+            const sortedResults =
+                Object.keys(results)
+                    .map((k) => results[k])
+                    .sort((a, b) => a.score - b.score);
+
+            sortedResults.forEach((result) => {
+                sys.stdout.write(makeSpan(result));
+            });
+
+            return sortedResults;
+        }
+        return [];
+    };
+
+
+const lookup: (a: Context, b: ISys, c: string[]) => Promise<any> =
+    (ctx, sys, argv) => {
+
+        if (argv.length === 0) {
+            return Promise.reject(new Error('MissingArguments'));
+        }
+
+        const resolver: (a: (b: ScoredResult[]) => void, c: (d: any) => void) => void =
+            (resolve, reject) => {
+                getconfig('apiUrl')
+                    .then((apiUrl) => {
+                        const transport = new Transport();
+                        const options = {
+                            url: `${apiUrl}/group/${argv[0]}`,
+                            parse: printResult(ctx, sys),
+                        }
+                        transport
+                            .get<ScoredResult[]>(options)
+                            .then(resolve)
+                            .catch(reject);
+
+                    })
+                    .catch(reject);
+            };
+
+        return (new Promise(resolver));
+    }
+
+
+export const command: ICommand = {
     name: 'lookup',
     command: lookup
 };
