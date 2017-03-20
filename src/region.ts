@@ -8,97 +8,132 @@
  *
  */
 
-import _ from 'lodash';
 
-import util from 'util';
-import region from '../Region';
+import { format } from 'util';
+import * as Promise from 'bluebird';
+import { Context, ISys, region, getenv, ICommand } from "waend-shell";
+import { Geometry, Extent } from "waend-lib";
 
+const setRegion: (a: Context, b: ISys, c: string[]) => Promise<any> =
+    (_ctx, _sys, argv) => {
 
-function setRegion (east, south, west, north) {
-    const self = this;
-    const env = self.shell.env;
-    const terminal = self.shell.terminal;
+        const fromEnv = getenv<Extent | Array<number> | Geometry>('DELIVERED');
+        let extent: Extent | null;
 
-    let extent = [
-        parseFloat(west),
-        parseFloat(south),
-        parseFloat(east),
-        parseFloat(north)
-    ];
+        if ((argv.length < 4) && (!fromEnv)) {
+            return Promise.reject(new Error('MissingArguments'));
+        }
 
-    if ((0 === arguments.length)
-        && env.DELIVERED
-        && env.DELIVERED.getExtent) {
-            extent = env.DELIVERED.getExtent();
+        if (argv.length >= 4) {
+            extent = new Extent([
+                parseFloat(argv[0]),
+                parseFloat(argv[1]),
+                parseFloat(argv[2]),
+                parseFloat(argv[3])
+            ]);
+        }
+        else if (fromEnv) {
+            try {
+                extent = new Extent(fromEnv);
+            }
+            catch (_e) {
+                extent = null;
+            }
+        }
+        else {
+            extent = null;
+        }
+
+        if (!extent) {
+            return Promise.reject(new Error('NothingAsAnExtent'));
+        }
+
+        region.push(extent);
+        return Promise.resolve(region.get().getArray());
     }
 
-    region.push(extent);
-    return self.end(region.get().getArray());
-}
-
-
-function getRegion () {
-    const r = region.get();
-    return this.end(r.getArray());
-}
-
-function popRegion () {
-    const r = region.pop();
-    return this.end(r.getArray());
-}
-
-function getCenter () {
-    const r = region.get();
-    const center = r.getCenter().getCoordinates();
-    this.sys.stdout.write(center[0], ' ', center[1]);
-    return this.end(center);
-}
-
-function printRegion (opt_format) {
-    const r = region.get();
-    const NE = r.getTopRight().getCoordinates();
-    const SW = r.getBottomLeft().getCoordinates();
-    const f = '%d %d %d %d';
-
-    this.sys.stdout.write(util.format(f, SW[0], SW[1], NE[0], NE[1]));
-    return this.end(r.getArray());
-}
-
-
-function bufferRegion (arg) {
-    const r = region.get();
-
-    r.buffer(parseFloat(arg) || 0);
-    region.push(r);
-    return this.end(r.getArray());
-}
-
-function regionCommand () {
-    const args = _.toArray(arguments);
-    const action = args.shift();
-
-    if('set' === action){
-        return setRegion.apply(this, args);
-    }
-    else if('get' === action){
-        return getRegion.apply(this, args);
-    }
-    else if('pop' === action){
-        return popRegion.apply(this, args);
-    }
-    else if('center' === action){
-        return getCenter.apply(this, args);
-    }
-    else if('buffer' === action){
-        return bufferRegion.apply(this, args);
-    }
-    else if('print' === action){
-        return printRegion.apply(this, args);
-    }
-    return this.endWithError('not a valid action');
-}
-
-export default {
-    name: 'region',
-    command: regionCommand
+export const setRegionCmd: ICommand = {
+    command: setRegion,
+    name: 'region-set'
 };
+
+
+const getRegion: (a: Context, b: ISys, c: string[]) => Promise<any> =
+    (_ctx, _sys, _argv) => {
+        const r = region.get();
+        return Promise.resolve(r.getArray());
+    }
+
+export const getRegionCmd: ICommand = {
+    command: getRegion,
+    name: 'region-get'
+};
+
+
+
+const popRegion: (a: Context, b: ISys, c: string[]) => Promise<any> =
+    (_ctx, _sys, _argv) => {
+        const r = region.pop();
+        if (!r) {
+            return Promise.reject(new Error('NoMoreRegionToPop'));
+        }
+        return Promise.resolve(r.getArray());
+    }
+
+export const popRegionCmd: ICommand = {
+    command: popRegion,
+    name: 'region-pop'
+};
+
+
+const getCenter: (a: Context, b: ISys, c: string[]) => Promise<any> =
+    (_ctx, sys, _argv) => {
+        const r = region.get();
+        const center = r.getCenter().getCoordinates();
+        sys.stdout.write([{ text: `[${center[0]} ${center[1]}]` }]);
+        return Promise.resolve(center);
+    }
+
+export const getCenterCmd: ICommand = {
+    command: getCenter,
+    name: 'region-center'
+};
+
+
+const printRegion: (a: Context, b: ISys, c: string[]) => Promise<any> =
+    (_ctx, sys, argv) => {
+        const r = region.get();
+        const NE = r.getTopRight().getCoordinates();
+        const SW = r.getBottomLeft().getCoordinates();
+        let f = '%d %d %d %d';
+        if (argv.length >= 1) {
+            f = argv[0];
+        }
+        sys.stdout.write([{ text: format(f, SW[0], SW[1], NE[0], NE[1]) }]);
+        return Promise.resolve(r.getArray());
+    }
+
+export const printRegionCmd: ICommand = {
+    command: printRegion,
+    name: 'region-print'
+};
+
+
+const bufferRegion: (a: Context, b: ISys, c: string[]) => Promise<any> =
+    (_ctx, _sys, argv) => {
+        if (argv.length === 0) {
+            return Promise.reject(new Error('MissingArgument'));
+        }
+        const r = region.get();
+
+        r.buffer(parseFloat(argv[0]));
+        region.push(r);
+        return Promise.resolve(r.getArray());
+    }
+
+export const bufferRegionCmd: ICommand = {
+    command: bufferRegion,
+    name: 'region-buffer'
+};
+
+

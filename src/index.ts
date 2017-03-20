@@ -31,7 +31,14 @@ export { command as lookup } from './lookup';
 // export pan from './pan';
 export { command as printCurrentContext } from './printCurrentContext';
 // export read from './read';
-// export region from './region';
+export {
+    setRegionCmd as setRegion,
+    getRegionCmd as getRegion,
+    popRegionCmd as popRegion,
+    getCenterCmd as getRegionCenter,
+    printRegionCmd as printRegion,
+    bufferRegionCmd as bufferRegion
+} from './region';
 // export select from './select';
 export { command as setAttribute } from './setAttribute';
 // export zoom from './zoom';
