@@ -22,6 +22,7 @@ export { command as create } from './new';
 // export echo from './echo';
 // export filter from './filter';
 export { command as getAttribute } from './getAttribute';
+export { command as list } from './list';
 // export listCommands from './listCommands';
 export { command as login } from './login';
 // export logout from './logout';
