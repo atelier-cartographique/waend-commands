@@ -3,17 +3,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Promise = require("bluebird");
 const waend_util_1 = require("waend-util");
 const { getDomForModel } = waend_util_1.dom;
-const printModel = (sys) => (model) => {
+const printModel = (ctx, sys) => (model) => {
+    const modelPath = '/' + ctx.binder.getComps(model.id).join('/');
     sys.stdout.write([{
             text: model.id,
-            fragment: getDomForModel(model, 'name', 'div', 'model-name')
+            fragment: getDomForModel(model, 'name', 'div', 'model-name'),
+            commands: [`cc ${modelPath}`]
         }]);
 };
 const listGroups = (ctx, sys, components) => {
     return (ctx.binder
         .getGroups(components.user)
         .then((groups) => {
-        groups.forEach(printModel(sys));
+        groups.forEach(printModel(ctx, sys));
         return groups;
     }));
 };
@@ -21,7 +23,7 @@ const listLayers = (ctx, sys, components) => {
     return (ctx.binder
         .getLayers(components.user, components.group)
         .then((layers) => {
-        layers.forEach(printModel(sys));
+        layers.forEach(printModel(ctx, sys));
         return layers;
     }));
 };
@@ -29,7 +31,7 @@ const listFeatures = (ctx, sys, components) => {
     return (ctx.binder
         .getFeatures(components.user, components.group, components.layer)
         .then((features) => {
-        features.forEach(printModel(sys));
+        features.forEach(printModel(ctx, sys));
         return features;
     }));
 };

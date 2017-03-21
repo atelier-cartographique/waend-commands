@@ -7,22 +7,25 @@ import { dom, getPathComponents, Components, LayerComponents, GroupComponents } 
 
 const { getDomForModel } = dom;
 
-const printModel: (a: ISys) => (b: Model) => void =
-    (sys) => (model) => {
+const printModel: (a: Context, b: ISys) => (c: Model) => void =
+    (ctx, sys) => (model) => {
+        const modelPath = '/' + ctx.binder.getComps(model.id).join('/');
         sys.stdout.write([{
             text: model.id,
-            fragment: getDomForModel(model, 'name', 'div', 'model-name')
+            fragment: getDomForModel(model, 'name', 'div', 'model-name'),
+            commands: [`cc ${modelPath}`]
         }])
     };
 
 
 const listGroups: (a: Context, b: ISys, c: Components) => Promise<any> =
     (ctx, sys, components) => {
+
         return (
             ctx.binder
                 .getGroups(components.user)
                 .then((groups) => {
-                    groups.forEach(printModel(sys));
+                    groups.forEach(printModel(ctx, sys));
                     return groups;
                 }));
     }
@@ -34,7 +37,7 @@ const listLayers: (a: Context, b: ISys, c: GroupComponents) => Promise<any> =
             ctx.binder
                 .getLayers(components.user, components.group)
                 .then((layers) => {
-                    layers.forEach(printModel(sys));
+                    layers.forEach(printModel(ctx, sys));
                     return layers;
                 }));
     }
@@ -46,7 +49,7 @@ const listFeatures: (a: Context, b: ISys, c: LayerComponents) => Promise<any> =
             ctx.binder
                 .getFeatures(components.user, components.group, components.layer)
                 .then((features) => {
-                    features.forEach(printModel(sys));
+                    features.forEach(printModel(ctx, sys));
                     return features;
                 }));
     }
