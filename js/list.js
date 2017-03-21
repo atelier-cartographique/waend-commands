@@ -4,7 +4,7 @@ const Promise = require("bluebird");
 const waend_util_1 = require("waend-util");
 const { getDomForModel } = waend_util_1.dom;
 const printModel = (ctx, sys) => (model) => {
-    const modelPath = '/' + ctx.binder.getComps(model.id).join('/');
+    const modelPath = ctx.resolve(model.id);
     sys.stdout.write([{
             text: model.id,
             fragment: getDomForModel(model, 'name', 'div', 'model-name'),

@@ -9,7 +9,7 @@ const { getDomForModel } = dom;
 
 const printModel: (a: Context, b: ISys) => (c: Model) => void =
     (ctx, sys) => (model) => {
-        const modelPath = '/' + ctx.binder.getComps(model.id).join('/');
+        const modelPath = ctx.resolve(model.id);
         sys.stdout.write([{
             text: model.id,
             fragment: getDomForModel(model, 'name', 'div', 'model-name'),
