@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
-        "project": "src",
-        "outDir": "js",
+        "outDir": "defs",
         "declaration": true,
         "module": "commonjs",
         "moduleResolution": "node",
@@ -16,5 +15,6 @@
         "strictNullChecks": true,
         "removeComments": true,
         "sourceMap": false
-    }
+    },
+    "files": ["src/index.ts"]
 }
