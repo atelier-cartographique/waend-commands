@@ -116,8 +116,7 @@ const lookup: (a: Context, b: ISys, c: string[]) => Promise<any> =
                             .then(resolve)
                             .catch(reject);
 
-                    })
-                    .catch(reject);
+                    }, reject);
             };
 
         return (new Promise(resolver));
